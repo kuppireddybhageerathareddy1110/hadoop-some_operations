@@ -1,0 +1,10 @@
+user1:user2,user3,user4
+user2:user1,user5
+user3:user1,user6,user7
+user4:user1,user8
+user5:user2,user9
+user6:user3
+user7:user3,user10
+user8:user4
+user9:user5
+user10:user7

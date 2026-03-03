@@ -1,0 +1,55 @@
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
+
+public class PCY {
+    private static final double MIN_SUPPORT = 0.02;
+    private static final int BUCKETS = 10_000;
+    private static final String[] DATASETS = {
+        "groceries.csv",
+        "Assignment-1_Data.csv",
+        "Groceries_dataset.csv"
+    };
+
+    public static void main(String[] args) {
+        for (String file : DATASETS) {
+            System.out.println("\n=== Running PCY on " + file + " ===");
+            List<Set<String>> tx = loadTransactions(file);
+            if (tx.isEmpty()) continue;
+            Map<Set<String>, Integer> freq = pcy(tx, MIN_SUPPORT);
+            printFrequentItemsets(freq, tx.size());
+        }
+    }
+
+    private static List<Set<String>> loadTransactions(String filename) {
+        List<Set<String>> tx = new ArrayList<>();
+        Path p = Paths.get(filename);
+        if (!Files.exists(p)) { System.out.println("File not found: " + filename); return tx; }
+
+        try (BufferedReader br = Files.newBufferedReader(p)) {
+            String header = br.readLine(); if (header == null) return tx;
+            String[] h = splitCSV(header);
+            int keyCol = 0; Set<Integer> itemCols = new HashSet<>();
+
+            String first = h[0].toLowerCase().trim();
+            if (first.startsWith("billno")) {
+                keyCol = 0;
+                for (int i = 0; i < h.length; i++) if (h[i].toLowerCase().contains("itemname")) itemCols.add(i);
+            } else if (first.startsWith("member_number")) {
+                keyCol = 0;
+                for (int i = 0; i < h.length; i++) if (h[i].toLowerCase().contains("itemdescription")) itemCols.add(i);
+            } else {
+                for (int i = 1; i < h.length; i++) if (!h[i].trim().isEmpty()) itemCols.add(i);
+                keyCol = -1;
+            }
+            if (itemCols.isEmpty()) { System.out.println("No item column in " + filename); return tx; }
+
+            Map<String, Set<String>> basket = new HashMap<>();
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (line.trim().isEmpty()) continue;
+                String[] cols = splitCSV(line);
+                String txKey = keyCol == -1 ? String.valueOf(line.hashCode()) :
+                               cols[keyCol].replaceAll("\"", "").trim();
+                if (first.startsWith("member_number") && cols.length > 1)
+                    txKey += "_" + cols[1].replace
